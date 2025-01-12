@@ -62,21 +62,23 @@ const Index = () => {
       const valorCentavos = Math.round(parseFloat(value) * 100);
       
       const paymentData = {
-        name,
-        email: EMAIL,
-        cpf: cpf.replace(/\D/g, ""),
-        phone: PHONE,
-        paymentMethod: "PIX",
-        amount: valorCentavos,
-        traceable: true,
-        items: [
-          {
-            unitPrice: 1,
-            title: "Pagamento",
-            quantity: 1,
-            tangible: true
-          }
-        ]
+        json: {
+          name,
+          email: EMAIL,
+          cpf: cpf.replace(/\D/g, ""),
+          phone: PHONE,
+          paymentMethod: "PIX",
+          amount: valorCentavos,
+          traceable: true,
+          items: [
+            {
+              unitPrice: valorCentavos,
+              title: "Pagamento",
+              quantity: 1,
+              tangible: true
+            }
+          ]
+        }
       };
 
       const response = await fetch(VECTOR_API_URL, {
@@ -93,6 +95,7 @@ const Index = () => {
       }
 
       const result = await response.json();
+      console.log("API Response:", result);
       
       if (result.result?.data?.pixQrCode && result.result?.data?.pixCode) {
         navigate(`/detalhes?pixCode=${encodeURIComponent(result.result.data.pixCode)}&qrCode=${encodeURIComponent(result.result.data.pixQrCode)}`);
@@ -100,6 +103,7 @@ const Index = () => {
         throw new Error("Resposta inválida da API");
       }
     } catch (error) {
+      console.error("Erro na requisição:", error);
       toast({
         title: "Erro",
         description: "Não foi possível gerar o PIX no momento. Tente novamente em alguns minutos.",

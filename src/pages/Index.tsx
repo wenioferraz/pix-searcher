@@ -59,9 +59,8 @@ const Index = () => {
     setProcessing(true);
 
     try {
-      // Converte o valor para centavos
-      const valorNumerico = value.replace(",", ".");
-      const valorCentavos = Math.round(parseFloat(valorNumerico) * 100);
+      const valorNumerico = parseFloat(value.replace(/\./g, '').replace(',', '.'));
+      const valorCentavos = Math.round(valorNumerico * 100);
       
       const paymentData = {
         name,

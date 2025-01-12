@@ -19,7 +19,7 @@ interface PaymentData {
 }
 
 const DetalhesPage = () => {
-  const { id } = useParams();
+  const { id } = useParams<{ id: string }>();
   const { toast } = useToast();
   const [loading, setLoading] = useState(true);
   const [paymentData, setPaymentData] = useState<PaymentData | null>(null);
@@ -49,6 +49,7 @@ const DetalhesPage = () => {
         }
         
         const data = await response.json();
+        console.log("Resposta da API:", data);
         
         if (!data.result?.data) {
           throw new Error("Dados do pagamento não encontrados");
@@ -57,7 +58,7 @@ const DetalhesPage = () => {
         const newPaymentData = {
           status: data.result.data.status,
           name: data.result.data.name,
-          amount: data.result.data.amount / 100, // Convertendo centavos para reais
+          amount: data.result.data.amount / 100,
           pixCode: data.result.data.pixCode,
           pixQrCode: data.result.data.pixQrCode,
         };

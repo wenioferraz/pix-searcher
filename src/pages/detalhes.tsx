@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from "react";
-import { useSearchParams } from "react-router-dom";
+import { useParams } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { useToast } from "@/hooks/use-toast";
@@ -19,13 +19,11 @@ interface PaymentData {
 }
 
 const DetalhesPage = () => {
-  const [searchParams] = useSearchParams();
+  const { id } = useParams();
   const { toast } = useToast();
   const [loading, setLoading] = useState(true);
   const [paymentData, setPaymentData] = useState<PaymentData | null>(null);
   const [shouldPoll, setShouldPoll] = useState(true);
-  
-  const id = searchParams.get("id");
 
   useEffect(() => {
     const checkPaymentStatus = async () => {
@@ -56,6 +54,11 @@ const DetalhesPage = () => {
         }
       } catch (error) {
         console.error("Erro ao verificar status:", error);
+        toast({
+          title: "Erro",
+          description: "Erro ao carregar os detalhes do pagamento",
+          variant: "destructive",
+        });
       } finally {
         setLoading(false);
       }
@@ -66,7 +69,7 @@ const DetalhesPage = () => {
       const interval = setInterval(checkPaymentStatus, 5000);
       return () => clearInterval(interval);
     }
-  }, [id, shouldPoll]);
+  }, [id, shouldPoll, toast]);
 
   const handleCopy = async () => {
     try {

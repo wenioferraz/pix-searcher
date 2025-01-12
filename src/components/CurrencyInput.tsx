@@ -9,8 +9,18 @@ interface CurrencyInputProps {
 
 export const CurrencyInput = ({ value, onChange, disabled }: CurrencyInputProps) => {
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    let inputValue = e.target.value.replace(/[^\d,]/g, "");
+    let inputValue = e.target.value;
     
+    // Remove tudo exceto números e vírgula
+    inputValue = inputValue.replace(/[^\d,]/g, "");
+    
+    // Garante apenas uma vírgula
+    const commaCount = (inputValue.match(/,/g) || []).length;
+    if (commaCount > 1) {
+      return;
+    }
+    
+    // Limita a dois dígitos após a vírgula
     if (inputValue.includes(',')) {
       const [inteiro, decimal] = inputValue.split(',');
       if (decimal && decimal.length > 2) {
@@ -18,19 +28,19 @@ export const CurrencyInput = ({ value, onChange, disabled }: CurrencyInputProps)
       }
     }
     
-    const numericValue = inputValue.replace(",", ".");
-    onChange(numericValue);
+    onChange(inputValue);
   };
 
   const formatDisplayValue = (value: string) => {
     if (!value) return "";
-    const numericValue = parseFloat(value) || 0;
-    return numericValue.toLocaleString('pt-BR', {
-      style: 'currency',
-      currency: 'BRL',
-      minimumFractionDigits: 2,
-      maximumFractionDigits: 2
-    });
+    
+    // Remove o R$ e espaços para processar apenas o número
+    const numericValue = value.replace(/[^\d,]/g, "");
+    
+    if (!numericValue) return "";
+    
+    // Formata o valor para exibição
+    return `R$ ${numericValue}`;
   };
 
   return (

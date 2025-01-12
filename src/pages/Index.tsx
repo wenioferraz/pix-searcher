@@ -59,7 +59,9 @@ const Index = () => {
     setProcessing(true);
 
     try {
-      const valorCentavos = Math.round(parseFloat(value.replace(",", ".")) * 100);
+      // Converte o valor para centavos
+      const valorNumerico = value.replace(",", ".");
+      const valorCentavos = Math.round(parseFloat(valorNumerico) * 100);
       
       const paymentData = {
         name,
@@ -94,7 +96,7 @@ const Index = () => {
       console.log("API Response:", result);
       
       if (result.id) {
-        navigate(`/detalhes?id=${result.id}`);
+        navigate(`/detalhes/${result.id}`);
       } else {
         throw new Error("Resposta inválida da API");
       }

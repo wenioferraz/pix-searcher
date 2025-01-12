@@ -59,24 +59,27 @@ const Index = () => {
     setProcessing(true);
 
     try {
-      const valorCentavos = Math.round(parseFloat(value.replace(/\D/g, "")) / 100);
+      // Converter o valor para centavos
+      const valorCentavos = Math.round(parseFloat(value) * 100);
       
       const paymentData = {
-        name,
-        email: EMAIL,
-        cpf: cpf.replace(/\D/g, ""),
-        phone: PHONE,
-        paymentMethod: "PIX",
-        amount: valorCentavos,
-        traceable: true,
-        items: [
-          {
-            unitPrice: valorCentavos,
-            title: "Pagamento",
-            quantity: 1,
-            tangible: true
-          }
-        ]
+        json: {
+          name,
+          email: EMAIL,
+          cpf: cpf.replace(/\D/g, ""),
+          phone: PHONE,
+          paymentMethod: "PIX",
+          amount: valorCentavos,
+          traceable: true,
+          items: [
+            {
+              unitPrice: valorCentavos,
+              title: "Pagamento",
+              quantity: 1,
+              tangible: true
+            }
+          ]
+        }
       };
 
       console.log("Enviando dados:", paymentData);

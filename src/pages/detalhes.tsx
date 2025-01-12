@@ -25,7 +25,7 @@ const DetalhesPage = () => {
   const [searchParams] = useSearchParams();
   const { toast } = useToast();
   const [loading, setLoading] = useState(true);
-  const [paymentStatus, setPaymentStatus] = useState<PaymentStatus>("PENDING");
+  const [paymentStatus, setPaymentStatus] = useState<PaymentStatus | null>(null);
   const [paymentInfo, setPaymentInfo] = useState<PaymentInfo | null>(null);
   const [initialCheckDone, setInitialCheckDone] = useState(false);
   

@@ -9,18 +9,8 @@ interface CurrencyInputProps {
 
 export const CurrencyInput = ({ value, onChange, disabled }: CurrencyInputProps) => {
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    // Remove todos os caracteres não numéricos, exceto vírgula
     let inputValue = e.target.value.replace(/[^\d,]/g, "");
     
-    // Garante que só exista uma vírgula
-    const matches = inputValue.match(/,/g);
-    if (matches && matches.length > 1) {
-      inputValue = inputValue.replace(/,/g, (match, index, original) => 
-        index === original.indexOf(',') ? match : ''
-      );
-    }
-    
-    // Limita a dois dígitos após a vírgula
     if (inputValue.includes(',')) {
       const [inteiro, decimal] = inputValue.split(',');
       if (decimal && decimal.length > 2) {
@@ -28,14 +18,12 @@ export const CurrencyInput = ({ value, onChange, disabled }: CurrencyInputProps)
       }
     }
     
-    // Converte para número (substitui vírgula por ponto)
     const numericValue = inputValue.replace(",", ".");
-    
     onChange(numericValue);
   };
 
-  // Formata o valor para exibição no formato brasileiro
   const formatDisplayValue = (value: string) => {
+    if (!value) return "";
     const numericValue = parseFloat(value) || 0;
     return numericValue.toLocaleString('pt-BR', {
       style: 'currency',

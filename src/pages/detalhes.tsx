@@ -14,6 +14,8 @@ interface PaymentData {
   status: PaymentStatus;
   name: string;
   amount: number;
+  pixCode?: string;
+  pixQrCode?: string;
 }
 
 const DetalhesPage = () => {
@@ -24,8 +26,6 @@ const DetalhesPage = () => {
   const [shouldPoll, setShouldPoll] = useState(true);
   
   const id = searchParams.get("id");
-  const pixCode = searchParams.get("pixCode");
-  const qrCode = searchParams.get("qrCode");
 
   useEffect(() => {
     const checkPaymentStatus = async () => {
@@ -44,12 +44,13 @@ const DetalhesPage = () => {
         const newPaymentData = {
           status: data.result.data.status,
           name: data.result.data.name,
-          amount: data.result.data.amount / 100, // Convertendo centavos para reais
+          amount: data.result.data.amount / 100,
+          pixCode: data.result.data.pixCode,
+          pixQrCode: data.result.data.pixQrCode,
         };
         
         setPaymentData(newPaymentData);
         
-        // Se o pagamento foi aprovado, para de fazer polling
         if (newPaymentData.status === "APPROVED") {
           setShouldPoll(false);
         }
@@ -69,7 +70,7 @@ const DetalhesPage = () => {
 
   const handleCopy = async () => {
     try {
-      await navigator.clipboard.writeText(pixCode || "");
+      await navigator.clipboard.writeText(paymentData?.pixCode || "");
       toast({
         title: "Sucesso",
         description: "Código PIX copiado para a área de transferência",
@@ -132,13 +133,11 @@ const DetalhesPage = () => {
                   </span>
                 </div>
                 
-                {paymentData.status === "PENDING" && (
+                {paymentData.status === "PENDING" && paymentData.pixQrCode && paymentData.pixCode && (
                   <>
-                    {qrCode && (
-                      <div className="flex justify-center">
-                        <img src={qrCode} alt="QR Code PIX" className="w-64 h-64" />
-                      </div>
-                    )}
+                    <div className="flex justify-center">
+                      <img src={paymentData.pixQrCode} alt="QR Code PIX" className="w-64 h-64" />
+                    </div>
                     
                     <div className="space-y-4">
                       <div className="p-4 bg-gray-50 rounded-lg">
@@ -146,7 +145,7 @@ const DetalhesPage = () => {
                           Código PIX (Copia e Cola)
                         </p>
                         <p className="font-mono text-sm break-all bg-white p-3 rounded border">
-                          {pixCode}
+                          {paymentData.pixCode}
                         </p>
                       </div>
                       
@@ -163,6 +162,12 @@ const DetalhesPage = () => {
             )}
           </CardContent>
         </Card>
+
+        <div className="mt-8 text-center text-sm text-gray-500">
+          <p>
+            Versão 1.0.8 - Última atualização: {new Date().toLocaleString('pt-BR', { timeZone: 'America/Sao_Paulo' })}
+          </p>
+        </div>
       </div>
     </div>
   );

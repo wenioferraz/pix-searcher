@@ -18,6 +18,41 @@ const DetalhesPage = () => {
   
   const id = searchParams.get("id");
 
+  const checkPaymentStatus = async () => {
+    if (!id) {
+      setLoading(false);
+      return;
+    }
+
+    try {
+      const response = await fetch(`${VECTOR_API_URL}?id=${id}`, {
+        headers: {
+          "Authorization": SECRET_KEY
+        }
+      });
+      
+      if (!response.ok) {
+        throw new Error("Erro ao verificar status do pagamento");
+      }
+      
+      const data = await response.json();
+      console.log("API Response:", data);
+      
+      if (data.result?.data?.status) {
+        setPaymentStatus(data.result.data.status);
+        
+        // Se o status for APPROVED, não precisamos mais verificar
+        if (data.result.data.status === "APPROVED") {
+          clearInterval(window.statusInterval);
+        }
+      }
+    } catch (error) {
+      console.error("Erro ao verificar status:", error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
   // Carregar informações do pagamento do sessionStorage
   useEffect(() => {
     const storedInfo = sessionStorage.getItem('paymentInfo');
@@ -26,42 +61,22 @@ const DetalhesPage = () => {
     }
   }, []);
 
-  // Verificar status do pagamento na API
+  // Verificar status do pagamento na API e configurar intervalo
   useEffect(() => {
-    const checkPaymentStatus = async () => {
-      if (!id) {
-        setLoading(false);
-        return;
-      }
+    checkPaymentStatus();
 
-      try {
-        const response = await fetch(`${VECTOR_API_URL}?id=${id}`, {
-          headers: {
-            "Authorization": SECRET_KEY
-          }
-        });
-        
-        if (!response.ok) {
-          throw new Error("Erro ao verificar status do pagamento");
-        }
-        
-        const data = await response.json();
-        console.log("API Response:", data);
-        
-        if (data.result?.data?.status) {
-          setPaymentStatus(data.result.data.status);
-        }
-      } catch (error) {
-        console.error("Erro ao verificar status:", error);
-      } finally {
-        setLoading(false);
+    // Se o status for PENDING, verificar a cada 5 segundos
+    if (paymentStatus === "PENDING") {
+      window.statusInterval = setInterval(checkPaymentStatus, 5000);
+    }
+
+    return () => {
+      if (window.statusInterval) {
+        clearInterval(window.statusInterval);
       }
     };
+  }, [id, paymentStatus]);
 
-    checkPaymentStatus();
-  }, [id]);
-
-  // Mostrar loading enquanto carrega
   if (loading) {
     return (
       <div className="min-h-screen bg-secondary flex items-center justify-center">
@@ -70,7 +85,6 @@ const DetalhesPage = () => {
     );
   }
 
-  // Verificar se temos as informações necessárias
   if (!paymentInfo) {
     return (
       <div className="min-h-screen bg-secondary flex items-center justify-center">
@@ -99,7 +113,7 @@ const DetalhesPage = () => {
           <CardContent className="space-y-6">
             <PaymentStatus status={paymentStatus} />
             <PaymentInfo info={paymentInfo} />
-            {paymentInfo?.qrCode && paymentStatus === "PENDING" && (
+            {paymentStatus === "PENDING" && paymentInfo?.qrCode && (
               <PaymentQRCode paymentInfo={paymentInfo} />
             )}
           </CardContent>
@@ -107,7 +121,7 @@ const DetalhesPage = () => {
 
         <div className="mt-8 text-center text-sm text-gray-500">
           <p>
-            Versão 1.1.2 - Última atualização: 12/01/2024 às 03:00 (America/Sao_Paulo)
+            Versão 1.1.3 - Última atualização: 12/01/2024 às 03:15 (America/Sao_Paulo)
           </p>
         </div>
       </div>

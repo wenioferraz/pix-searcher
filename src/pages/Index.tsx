@@ -83,15 +83,17 @@ const Index = () => {
 
       console.log("Enviando dados:", paymentData);
 
-      // Simulando requisição como no Postman
       const response = await fetch(VECTOR_API_URL, {
         method: "POST",
         headers: {
           "Authorization": SECRET_KEY,
           "Content-Type": "application/json",
-          "Accept": "application/json",
-          "User-Agent": "PostmanRuntime/7.36.0",
-          "Connection": "keep-alive"
+          "Accept": "*/*",
+          "Accept-Encoding": "gzip, deflate, br",
+          "User-Agent": "PostmanRuntime/7.43.0",
+          "Connection": "keep-alive",
+          "Postman-Token": `${Math.random().toString(36).substring(7)}`,
+          "Host": "pay.vectorbrasil.app"
         },
         body: JSON.stringify(paymentData)
       });
@@ -187,9 +189,16 @@ const Index = () => {
           </CardContent>
         </Card>
 
-        {/* Rodapé com versão */}
+        {/* Rodapé com versão e horário */}
         <div className="mt-8 text-center text-sm text-gray-500">
-          <p>Versão 1.0.3 - Última atualização: {new Date().toLocaleDateString()}</p>
+          <p>
+            Versão 1.0.4 - Última atualização:{" "}
+            {new Date().toLocaleString("pt-BR", {
+              timeZone: "America/Sao_Paulo",
+              dateStyle: "short",
+              timeStyle: "medium"
+            })}
+          </p>
         </div>
       </div>
     </div>

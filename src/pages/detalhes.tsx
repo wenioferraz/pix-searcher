@@ -1,94 +1,74 @@
 import React, { useEffect, useState } from "react";
 import { useSearchParams } from "react-router-dom";
+import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { useToast } from "@/hooks/use-toast";
 import { LoadingSpinner } from "@/components/LoadingSpinner";
-import { PaymentStatus } from "@/components/payment/PaymentStatus";
-import { PaymentInfo } from "@/components/payment/PaymentInfo";
-import { PaymentQRCode } from "@/components/payment/PaymentQRCode";
-import { PaymentInfoType, PaymentStatus as PaymentStatusType } from "@/types/payment";
 
 const VECTOR_API_URL = "https://pay.vectorbrasil.app/api/v1/transaction.getPayment";
 const SECRET_KEY = "7b3eb301-557c-46b4-bf3e-2c06f6ed741e";
 
+type PaymentStatus = "PENDING" | "APPROVED" | "REJECTED" | "REFUNDED" | "CHARGEBACK";
+
 const DetalhesPage = () => {
   const [searchParams] = useSearchParams();
+  const { toast } = useToast();
   const [loading, setLoading] = useState(true);
-  const [paymentStatus, setPaymentStatus] = useState<PaymentStatusType | null>(null);
-  const [paymentInfo, setPaymentInfo] = useState<PaymentInfoType | null>(null);
+  const [paymentStatus, setPaymentStatus] = useState<PaymentStatus>("PENDING");
   
   const id = searchParams.get("id");
+  const pixCode = searchParams.get("pixCode");
+  const qrCode = searchParams.get("qrCode");
 
-  const checkPaymentStatus = async () => {
-    if (!id) {
-      setLoading(false);
-      return;
-    }
-
-    try {
-      const response = await fetch(`${VECTOR_API_URL}?id=${id}`, {
-        headers: {
-          "Authorization": SECRET_KEY
-        }
-      });
-      
-      if (!response.ok) {
-        throw new Error("Erro ao verificar status do pagamento");
-      }
-      
-      const data = await response.json();
-      console.log("API Response:", data);
-      
-      if (data.result?.data?.status) {
-        setPaymentStatus(data.result.data.status);
+  useEffect(() => {
+    const checkPaymentStatus = async () => {
+      try {
+        const response = await fetch(`${VECTOR_API_URL}?id=${id}`, {
+          headers: {
+            "Authorization": SECRET_KEY
+          }
+        });
         
-        // Se o status for APPROVED, não precisamos mais verificar
-        if (data.result.data.status === "APPROVED") {
-          clearInterval(window.statusInterval);
+        if (!response.ok) {
+          throw new Error("Erro ao verificar status do pagamento");
         }
-      }
-    } catch (error) {
-      console.error("Erro ao verificar status:", error);
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  // Carregar informações do pagamento do sessionStorage
-  useEffect(() => {
-    const storedInfo = sessionStorage.getItem('paymentInfo');
-    if (storedInfo) {
-      setPaymentInfo(JSON.parse(storedInfo));
-    }
-  }, []);
-
-  // Verificar status do pagamento na API e configurar intervalo
-  useEffect(() => {
-    checkPaymentStatus();
-
-    // Se o status for PENDING, verificar a cada 5 segundos
-    if (paymentStatus === "PENDING") {
-      window.statusInterval = setInterval(checkPaymentStatus, 5000);
-    }
-
-    return () => {
-      if (window.statusInterval) {
-        clearInterval(window.statusInterval);
+        
+        const data = await response.json();
+        setPaymentStatus(data.result.data.status);
+      } catch (error) {
+        console.error("Erro ao verificar status:", error);
+      } finally {
+        setLoading(false);
       }
     };
-  }, [id, paymentStatus]);
+
+    if (id) {
+      checkPaymentStatus();
+      const interval = setInterval(checkPaymentStatus, 30000);
+      return () => clearInterval(interval);
+    }
+  }, [id]);
+
+  const handleCopy = async () => {
+    try {
+      await navigator.clipboard.writeText(pixCode || "");
+      toast({
+        title: "Sucesso",
+        description: "Código PIX copiado para a área de transferência",
+      });
+    } catch (error) {
+      toast({
+        title: "Erro",
+        description: "Não foi possível copiar o código PIX",
+        variant: "destructive",
+      });
+    }
+  };
 
   if (loading) {
     return (
       <div className="min-h-screen bg-secondary flex items-center justify-center">
         <LoadingSpinner />
-      </div>
-    );
-  }
-
-  if (!paymentInfo) {
-    return (
-      <div className="min-h-screen bg-secondary flex items-center justify-center">
-        <p className="text-red-500">Informações do pagamento não encontradas</p>
       </div>
     );
   }
@@ -111,19 +91,45 @@ const DetalhesPage = () => {
             </CardTitle>
           </CardHeader>
           <CardContent className="space-y-6">
-            <PaymentStatus status={paymentStatus} />
-            <PaymentInfo info={paymentInfo} />
-            {paymentStatus === "PENDING" && paymentInfo?.qrCode && (
-              <PaymentQRCode paymentInfo={paymentInfo} />
+            <div className={`text-center p-3 rounded-lg font-medium ${
+              paymentStatus === "APPROVED" ? "bg-green-100 text-green-800" : 
+              paymentStatus === "PENDING" ? "bg-yellow-100 text-yellow-800" : 
+              "bg-red-100 text-red-800"
+            }`}>
+              Status: {
+                paymentStatus === "APPROVED" ? "Aprovado" :
+                paymentStatus === "PENDING" ? "Pendente" :
+                paymentStatus === "REJECTED" ? "Rejeitado" :
+                paymentStatus === "REFUNDED" ? "Reembolsado" :
+                "Estornado"
+              }
+            </div>
+            
+            {qrCode && (
+              <div className="flex justify-center">
+                <img src={qrCode} alt="QR Code PIX" className="w-64 h-64" />
+              </div>
             )}
+            
+            <div className="space-y-4">
+              <div className="p-4 bg-gray-50 rounded-lg">
+                <p className="text-sm font-medium text-gray-600 mb-2">
+                  Código PIX (Copia e Cola)
+                </p>
+                <p className="font-mono text-sm break-all bg-white p-3 rounded border">
+                  {pixCode}
+                </p>
+              </div>
+              
+              <Button
+                onClick={handleCopy}
+                className="w-full bg-[#1BC11C] hover:bg-[#1BC11C]/90"
+              >
+                Copiar Código PIX
+              </Button>
+            </div>
           </CardContent>
         </Card>
-
-        <div className="mt-8 text-center text-sm text-gray-500">
-          <p>
-            Versão 1.1.3 - Última atualização: 12/01/2024 às 03:15 (America/Sao_Paulo)
-          </p>
-        </div>
       </div>
     </div>
   );

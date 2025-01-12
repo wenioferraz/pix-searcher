@@ -71,8 +71,11 @@ const DetalhesPage = () => {
 
     if (id) {
       checkPaymentStatus();
-      const interval = setInterval(checkPaymentStatus, 5000);
-      return () => clearInterval(interval);
+      // Só configura o intervalo se o status não for APPROVED
+      if (paymentStatus !== "APPROVED") {
+        const interval = setInterval(checkPaymentStatus, 5000);
+        return () => clearInterval(interval);
+      }
     }
   }, [id, paymentStatus, toast]);
 

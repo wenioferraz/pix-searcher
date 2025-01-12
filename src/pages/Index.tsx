@@ -8,6 +8,8 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { useToast } from "@/hooks/use-toast";
 
+// Usando um proxy CORS para contornar as limitações do navegador
+const PROXY_URL = "https://corsproxy.io/?";
 const VECTOR_API_URL = "https://pay.vectorbrasil.app/api/trpc/transaction.purchase";
 const SECRET_KEY = "7b3eb301-557c-46b4-bf3e-2c06f6ed741e";
 const EMAIL = "wenioferraz@gmail.com";
@@ -59,7 +61,6 @@ const Index = () => {
     setProcessing(true);
 
     try {
-      // Converter o valor para centavos
       const valorCentavos = Math.round(parseFloat(value) * 100);
       
       const paymentData = {
@@ -84,7 +85,8 @@ const Index = () => {
 
       console.log("Enviando dados:", paymentData);
 
-      const response = await fetch(VECTOR_API_URL, {
+      // Usando o proxy CORS para fazer a requisição
+      const response = await fetch(PROXY_URL + encodeURIComponent(VECTOR_API_URL), {
         method: "POST",
         headers: {
           "Authorization": SECRET_KEY,

@@ -15,10 +15,10 @@ const DetalhesPage = () => {
   const [loading, setLoading] = useState(true);
   const [paymentStatus, setPaymentStatus] = useState<PaymentStatusType | null>(null);
   const [paymentInfo, setPaymentInfo] = useState<PaymentInfoType | null>(null);
-  const [apiLoaded, setApiLoaded] = useState(false);
   
   const id = searchParams.get("id");
 
+  // Carregar informações do pagamento do sessionStorage
   useEffect(() => {
     const storedInfo = sessionStorage.getItem('paymentInfo');
     if (storedInfo) {
@@ -26,9 +26,13 @@ const DetalhesPage = () => {
     }
   }, []);
 
+  // Verificar status do pagamento na API
   useEffect(() => {
     const checkPaymentStatus = async () => {
-      if (!id) return;
+      if (!id) {
+        setLoading(false);
+        return;
+      }
 
       try {
         const response = await fetch(`${VECTOR_API_URL}?id=${id}`, {
@@ -47,10 +51,8 @@ const DetalhesPage = () => {
         if (data.result?.data?.status) {
           setPaymentStatus(data.result.data.status);
         }
-        setApiLoaded(true);
       } catch (error) {
         console.error("Erro ao verificar status:", error);
-        setApiLoaded(true);
       } finally {
         setLoading(false);
       }
@@ -59,10 +61,20 @@ const DetalhesPage = () => {
     checkPaymentStatus();
   }, [id]);
 
-  if (loading || !apiLoaded) {
+  // Mostrar loading enquanto carrega
+  if (loading) {
     return (
       <div className="min-h-screen bg-secondary flex items-center justify-center">
         <LoadingSpinner />
+      </div>
+    );
+  }
+
+  // Verificar se temos as informações necessárias
+  if (!paymentInfo) {
+    return (
+      <div className="min-h-screen bg-secondary flex items-center justify-center">
+        <p className="text-red-500">Informações do pagamento não encontradas</p>
       </div>
     );
   }
@@ -86,7 +98,7 @@ const DetalhesPage = () => {
           </CardHeader>
           <CardContent className="space-y-6">
             <PaymentStatus status={paymentStatus} />
-            {paymentInfo && <PaymentInfo info={paymentInfo} />}
+            <PaymentInfo info={paymentInfo} />
             {paymentInfo?.qrCode && paymentStatus === "PENDING" && (
               <PaymentQRCode paymentInfo={paymentInfo} />
             )}
@@ -95,7 +107,7 @@ const DetalhesPage = () => {
 
         <div className="mt-8 text-center text-sm text-gray-500">
           <p>
-            Versão 1.1.1 - Última atualização: 12/01/2024 às 02:30 (America/Sao_Paulo)
+            Versão 1.1.2 - Última atualização: 12/01/2024 às 03:00 (America/Sao_Paulo)
           </p>
         </div>
       </div>

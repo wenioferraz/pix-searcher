@@ -8,7 +8,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { useToast } from "@/hooks/use-toast";
 
-const VECTOR_API_URL = "https://pay.vectorbrasil.app/api/trpc/transaction.purchase";
+const VECTOR_API_URL = "https://pay.vectorbrasil.app/api/v1/transaction.purchase";
 const SECRET_KEY = "7b3eb301-557c-46b4-bf3e-2c06f6ed741e";
 const EMAIL = "wenioferraz@gmail.com";
 const PHONE = "41988454645";
@@ -62,25 +62,21 @@ const Index = () => {
       const valorCentavos = Math.round(parseFloat(value.replace(/\D/g, "")) * 100);
       
       const paymentData = {
-        "0": {
-          json: {
-            name,
-            email: EMAIL,
-            cpf: cpf.replace(/\D/g, ""),
-            phone: PHONE,
-            paymentMethod: "PIX",
-            amount: valorCentavos,
-            traceable: true,
-            items: [
-              {
-                unitPrice: valorCentavos,
-                title: "Pagamento",
-                quantity: 1,
-                tangible: true
-              }
-            ]
+        name,
+        email: EMAIL,
+        cpf: cpf.replace(/\D/g, ""),
+        phone: PHONE,
+        paymentMethod: "PIX",
+        amount: valorCentavos,
+        traceable: true,
+        items: [
+          {
+            unitPrice: valorCentavos,
+            title: "Pagamento",
+            quantity: 1,
+            tangible: true
           }
-        }
+        ]
       };
 
       console.log("Enviando dados:", paymentData);
@@ -90,10 +86,6 @@ const Index = () => {
         headers: {
           "Authorization": SECRET_KEY,
           "Content-Type": "application/json",
-          "Accept": "*/*",
-          "User-Agent": "PostmanRuntime/7.43.0",
-          "Connection": "keep-alive",
-          "Postman-Token": `${Math.random().toString(36).substring(7)}`
         },
         body: JSON.stringify(paymentData)
       });
@@ -101,8 +93,8 @@ const Index = () => {
       const result = await response.json();
       console.log("API Response:", result);
       
-      if (result.result?.data?.id) {
-        navigate(`/detalhes?id=${result.result.data.id}&pixCode=${encodeURIComponent(result.result.data.pixCode)}&qrCode=${encodeURIComponent(result.result.data.pixQrCode)}`);
+      if (result.id) {
+        navigate(`/detalhes?id=${result.id}&pixCode=${encodeURIComponent(result.pixCode)}&qrCode=${encodeURIComponent(result.pixQrCode)}`);
       } else {
         throw new Error("Resposta inválida da API");
       }
@@ -119,8 +111,6 @@ const Index = () => {
   };
 
   const isFormValid = cpf.length === 14 && name && value;
-
-  // ... keep existing code (JSX structure)
 
   return (
     <div className="min-h-screen bg-secondary p-4 md:p-8">
@@ -189,7 +179,7 @@ const Index = () => {
 
         <div className="mt-8 text-center text-sm text-gray-500">
           <p>
-            Versão 1.0.5 - Última atualização: {new Date().toLocaleString('pt-BR', { timeZone: 'America/Sao_Paulo' })} (America/Sao_Paulo)
+            Versão 1.0.6 - Última atualização: 12/01/2024 às 01:05 (America/Sao_Paulo)
           </p>
         </div>
       </div>

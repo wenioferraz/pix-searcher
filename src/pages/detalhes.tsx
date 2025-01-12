@@ -8,11 +8,13 @@ import { LoadingSpinner } from "@/components/LoadingSpinner";
 const VECTOR_API_URL = "https://pay.vectorbrasil.app/api/v1/transaction.getPayment";
 const SECRET_KEY = "7b3eb301-557c-46b4-bf3e-2c06f6ed741e";
 
+type PaymentStatus = "PENDING" | "APPROVED" | "REJECTED" | "REFUNDED" | "CHARGEBACK";
+
 const DetalhesPage = () => {
   const [searchParams] = useSearchParams();
   const { toast } = useToast();
   const [loading, setLoading] = useState(true);
-  const [paymentStatus, setPaymentStatus] = useState("");
+  const [paymentStatus, setPaymentStatus] = useState<PaymentStatus>("PENDING");
   
   const id = searchParams.get("id");
   const pixCode = searchParams.get("pixCode");
@@ -32,7 +34,7 @@ const DetalhesPage = () => {
         }
         
         const data = await response.json();
-        setPaymentStatus(data.status);
+        setPaymentStatus(data.result.data.status);
       } catch (error) {
         console.error("Erro ao verificar status:", error);
       } finally {
@@ -42,7 +44,6 @@ const DetalhesPage = () => {
 
     if (id) {
       checkPaymentStatus();
-      // Verificar status a cada 30 segundos
       const interval = setInterval(checkPaymentStatus, 30000);
       return () => clearInterval(interval);
     }
@@ -90,17 +91,19 @@ const DetalhesPage = () => {
             </CardTitle>
           </CardHeader>
           <CardContent className="space-y-6">
-            {paymentStatus && (
-              <div className={`text-center p-2 rounded ${
-                paymentStatus === "PAID" ? "bg-green-100 text-green-800" : 
-                paymentStatus === "PENDING" ? "bg-yellow-100 text-yellow-800" : 
-                "bg-red-100 text-red-800"
-              }`}>
-                Status: {paymentStatus === "PAID" ? "Pago" : 
-                        paymentStatus === "PENDING" ? "Pendente" : 
-                        "Cancelado"}
-              </div>
-            )}
+            <div className={`text-center p-3 rounded-lg font-medium ${
+              paymentStatus === "APPROVED" ? "bg-green-100 text-green-800" : 
+              paymentStatus === "PENDING" ? "bg-yellow-100 text-yellow-800" : 
+              "bg-red-100 text-red-800"
+            }`}>
+              Status: {
+                paymentStatus === "APPROVED" ? "Aprovado" :
+                paymentStatus === "PENDING" ? "Pendente" :
+                paymentStatus === "REJECTED" ? "Rejeitado" :
+                paymentStatus === "REFUNDED" ? "Reembolsado" :
+                "Estornado"
+              }
+            </div>
             
             {qrCode && (
               <div className="flex justify-center">

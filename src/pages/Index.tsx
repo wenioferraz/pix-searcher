@@ -59,27 +59,27 @@ const Index = () => {
     setProcessing(true);
 
     try {
-      const valorCentavos = Math.round(parseFloat(value) * 100);
+      const valorCentavos = Math.round(parseFloat(value.replace(/\D/g, "")) / 100);
       
       const paymentData = {
-        json: {
-          name,
-          email: EMAIL,
-          cpf: cpf.replace(/\D/g, ""),
-          phone: PHONE,
-          paymentMethod: "PIX",
-          amount: valorCentavos,
-          traceable: true,
-          items: [
-            {
-              unitPrice: valorCentavos,
-              title: "Pagamento",
-              quantity: 1,
-              tangible: true
-            }
-          ]
-        }
+        name,
+        email: EMAIL,
+        cpf: cpf.replace(/\D/g, ""),
+        phone: PHONE,
+        paymentMethod: "PIX",
+        amount: valorCentavos,
+        traceable: true,
+        items: [
+          {
+            unitPrice: valorCentavos,
+            title: "Pagamento",
+            quantity: 1,
+            tangible: true
+          }
+        ]
       };
+
+      console.log("Enviando dados:", paymentData);
 
       const response = await fetch(VECTOR_API_URL, {
         method: "POST",
@@ -97,7 +97,7 @@ const Index = () => {
       const result = await response.json();
       console.log("API Response:", result);
       
-      if (result.result?.data?.id && result.result?.data?.pixQrCode && result.result?.data?.pixCode) {
+      if (result.result?.data?.id) {
         navigate(`/detalhes?id=${result.result.data.id}&pixCode=${encodeURIComponent(result.result.data.pixCode)}&qrCode=${encodeURIComponent(result.result.data.pixQrCode)}`);
       } else {
         throw new Error("Resposta inválida da API");

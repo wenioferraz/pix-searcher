@@ -9,9 +9,14 @@ interface CurrencyInputProps {
 
 export const CurrencyInput = ({ value, onChange, disabled }: CurrencyInputProps) => {
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    // Remove todos os caracteres não numéricos
     let value = e.target.value.replace(/\D/g, "");
-    value = (parseInt(value) / 100).toFixed(2);
-    onChange(value);
+    
+    // Converte para número e divide por 100 para ter o valor em reais
+    const numericValue = (parseInt(value) || 0) / 100;
+    
+    // Formata o valor com duas casas decimais
+    onChange(numericValue.toFixed(2));
   };
 
   return (

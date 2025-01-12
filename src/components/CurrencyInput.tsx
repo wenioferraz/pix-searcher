@@ -9,44 +9,15 @@ interface CurrencyInputProps {
 
 export const CurrencyInput = ({ value, onChange, disabled }: CurrencyInputProps) => {
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    let inputValue = e.target.value;
-    
-    // Remove tudo exceto números e vírgula
-    inputValue = inputValue.replace(/[^\d,]/g, "");
-    
-    // Garante apenas uma vírgula
-    const commaCount = (inputValue.match(/,/g) || []).length;
-    if (commaCount > 1) {
-      return;
-    }
-    
-    // Limita a dois dígitos após a vírgula
-    if (inputValue.includes(',')) {
-      const [inteiro, decimal] = inputValue.split(',');
-      if (decimal && decimal.length > 2) {
-        inputValue = `${inteiro},${decimal.slice(0, 2)}`;
-      }
-    }
-    
-    onChange(inputValue);
-  };
-
-  const formatDisplayValue = (value: string) => {
-    if (!value) return "";
-    
-    // Remove o R$ e espaços para processar apenas o número
-    const numericValue = value.replace(/[^\d,]/g, "");
-    
-    if (!numericValue) return "";
-    
-    // Formata o valor para exibição
-    return `R$ ${numericValue}`;
+    let value = e.target.value.replace(/\D/g, "");
+    value = (parseInt(value) / 100).toFixed(2);
+    onChange(value);
   };
 
   return (
     <Input
       type="text"
-      value={formatDisplayValue(value)}
+      value={`R$ ${Number(value).toFixed(2)}`}
       onChange={handleChange}
       placeholder="R$ 0,00"
       disabled={disabled}

@@ -59,8 +59,7 @@ const Index = () => {
     setProcessing(true);
 
     try {
-      const valorNumerico = parseFloat(value.replace(/\./g, '').replace(',', '.'));
-      const valorCentavos = Math.round(valorNumerico * 100);
+      const valorCentavos = Math.round(parseFloat(value.replace(/\D/g, "")) * 100);
       
       const paymentData = {
         name,
@@ -95,7 +94,7 @@ const Index = () => {
       console.log("API Response:", result);
       
       if (result.id) {
-        navigate(`/detalhes/${result.id}`);
+        navigate(`/detalhes?id=${result.id}&pixCode=${encodeURIComponent(result.pixCode)}&qrCode=${encodeURIComponent(result.pixQrCode)}`);
       } else {
         throw new Error("Resposta inválida da API");
       }
@@ -180,7 +179,7 @@ const Index = () => {
 
         <div className="mt-8 text-center text-sm text-gray-500">
           <p>
-            Versão 1.0.8 - Última atualização: {new Date().toLocaleString('pt-BR', { timeZone: 'America/Sao_Paulo' })}
+            Versão 1.0.6 - Última atualização: 12/01/2024 às 01:05 (America/Sao_Paulo)
           </p>
         </div>
       </div>

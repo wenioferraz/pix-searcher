@@ -9,14 +9,27 @@ interface CurrencyInputProps {
 
 export const CurrencyInput = ({ value, onChange, disabled }: CurrencyInputProps) => {
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    // Remove tudo que não é número e vírgula
+    // Remove todos os caracteres não numéricos, exceto vírgula
     let inputValue = e.target.value.replace(/[^\d,]/g, "");
     
-    // Substitui vírgula por ponto para fazer o cálculo
-    inputValue = inputValue.replace(",", ".");
+    // Garante que só exista uma vírgula
+    const matches = inputValue.match(/,/g);
+    if (matches && matches.length > 1) {
+      inputValue = inputValue.replace(/,/g, (match, index, original) => 
+        index === original.indexOf(',') ? match : ''
+      );
+    }
     
-    // Converte para número e divide por 100 para ter o valor em reais
-    const numericValue = (parseFloat(inputValue) || 0).toString();
+    // Limita a dois dígitos após a vírgula
+    if (inputValue.includes(',')) {
+      const [inteiro, decimal] = inputValue.split(',');
+      if (decimal && decimal.length > 2) {
+        inputValue = `${inteiro},${decimal.slice(0, 2)}`;
+      }
+    }
+    
+    // Converte para número (substitui vírgula por ponto)
+    const numericValue = inputValue.replace(",", ".");
     
     onChange(numericValue);
   };

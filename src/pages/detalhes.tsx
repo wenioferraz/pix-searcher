@@ -27,6 +27,16 @@ const DetalhesPage = () => {
 
   useEffect(() => {
     const checkPaymentStatus = async () => {
+      if (!id) {
+        toast({
+          title: "Erro",
+          description: "ID do pagamento não encontrado",
+          variant: "destructive",
+        });
+        setLoading(false);
+        return;
+      }
+
       try {
         const response = await fetch(`${VECTOR_API_URL}?id=${id}`, {
           headers: {
@@ -39,17 +49,22 @@ const DetalhesPage = () => {
         }
         
         const data = await response.json();
+        
+        if (!data.result?.data) {
+          throw new Error("Dados do pagamento não encontrados");
+        }
+
         const newPaymentData = {
           status: data.result.data.status,
           name: data.result.data.name,
-          amount: data.result.data.amount / 100,
+          amount: data.result.data.amount / 100, // Convertendo centavos para reais
           pixCode: data.result.data.pixCode,
           pixQrCode: data.result.data.pixQrCode,
         };
         
         setPaymentData(newPaymentData);
         
-        if (newPaymentData.status === "APPROVED") {
+        if (newPaymentData.status !== "PENDING") {
           setShouldPoll(false);
         }
       } catch (error) {
@@ -64,7 +79,7 @@ const DetalhesPage = () => {
       }
     };
 
-    if (id && shouldPoll) {
+    if (shouldPoll) {
       checkPaymentStatus();
       const interval = setInterval(checkPaymentStatus, 5000);
       return () => clearInterval(interval);
@@ -72,8 +87,10 @@ const DetalhesPage = () => {
   }, [id, shouldPoll, toast]);
 
   const handleCopy = async () => {
+    if (!paymentData?.pixCode) return;
+    
     try {
-      await navigator.clipboard.writeText(paymentData?.pixCode || "");
+      await navigator.clipboard.writeText(paymentData.pixCode);
       toast({
         title: "Sucesso",
         description: "Código PIX copiado para a área de transferência",
@@ -91,6 +108,18 @@ const DetalhesPage = () => {
     return (
       <div className="min-h-screen bg-secondary flex items-center justify-center">
         <LoadingSpinner />
+      </div>
+    );
+  }
+
+  if (!paymentData) {
+    return (
+      <div className="min-h-screen bg-secondary flex items-center justify-center">
+        <Card className="w-full max-w-md">
+          <CardContent className="p-6">
+            <p className="text-center text-red-600">Pagamento não encontrado</p>
+          </CardContent>
+        </Card>
       </div>
     );
   }
@@ -113,64 +142,58 @@ const DetalhesPage = () => {
             </CardTitle>
           </CardHeader>
           <CardContent className="space-y-6">
-            {paymentData && (
-              <>
-                <div className={`text-center p-3 rounded-lg font-medium ${
-                  paymentData.status === "APPROVED" ? "bg-green-100 text-green-800" : 
-                  paymentData.status === "PENDING" ? "bg-yellow-100 text-yellow-800" : 
-                  "bg-red-100 text-red-800"
-                }`}>
-                  Status: {
-                    paymentData.status === "APPROVED" ? "Aprovado" :
-                    paymentData.status === "PENDING" ? "Pendente" :
-                    paymentData.status === "REJECTED" ? "Rejeitado" :
-                    paymentData.status === "REFUNDED" ? "Reembolsado" :
-                    "Estornado"
-                  }
-                </div>
+            <div className={`text-center p-3 rounded-lg font-medium ${
+              paymentData.status === "APPROVED" ? "bg-green-100 text-green-800" : 
+              paymentData.status === "PENDING" ? "bg-yellow-100 text-yellow-800" : 
+              "bg-red-100 text-red-800"
+            }`}>
+              Status: {
+                paymentData.status === "APPROVED" ? "Pagamento Aprovado" :
+                paymentData.status === "PENDING" ? "Aguardando Pagamento" :
+                paymentData.status === "REJECTED" ? "Pagamento Rejeitado" :
+                paymentData.status === "REFUNDED" ? "Pagamento Reembolsado" :
+                "Pagamento Estornado"
+              }
+            </div>
 
-                <div className="flex justify-between items-center p-4 bg-gray-50 rounded-lg">
-                  <span className="font-medium">{paymentData.name}</span>
-                  <span className="font-medium">
-                    R$ {paymentData.amount.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
-                  </span>
+            <div className="flex justify-between items-center p-4 bg-gray-50 rounded-lg">
+              <span className="font-medium">{paymentData.name}</span>
+              <span className="font-medium">
+                R$ {paymentData.amount.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
+              </span>
+            </div>
+            
+            {paymentData.status === "PENDING" && paymentData.pixQrCode && paymentData.pixCode && (
+              <>
+                <div className="flex justify-center">
+                  <img 
+                    src={paymentData.pixQrCode} 
+                    alt="QR Code PIX" 
+                    className="w-64 h-64"
+                  />
                 </div>
                 
-                {paymentData.status === "PENDING" && paymentData.pixQrCode && paymentData.pixCode && (
-                  <>
-                    <div className="flex justify-center">
-                      <img src={paymentData.pixQrCode} alt="QR Code PIX" className="w-64 h-64" />
-                    </div>
-                    
-                    <div className="space-y-4">
-                      <div className="p-4 bg-gray-50 rounded-lg">
-                        <p className="text-sm font-medium text-gray-600 mb-2">
-                          Código PIX (Copia e Cola)
-                        </p>
-                        <p className="font-mono text-sm break-all bg-white p-3 rounded border">
-                          {paymentData.pixCode}
-                        </p>
-                      </div>
-                      
-                      <Button
-                        onClick={handleCopy}
-                        className="w-full bg-[#1BC11C] hover:bg-[#1BC11C]/90"
-                      >
-                        Copiar Código PIX
-                      </Button>
-                    </div>
-                  </>
-                )}
+                <div className="space-y-4">
+                  <div className="p-4 bg-gray-50 rounded-lg">
+                    <p className="text-sm font-medium text-gray-600 mb-2">
+                      Código PIX (Copia e Cola)
+                    </p>
+                    <p className="font-mono text-sm break-all bg-white p-3 rounded border">
+                      {paymentData.pixCode}
+                    </p>
+                  </div>
+                  
+                  <Button
+                    onClick={handleCopy}
+                    className="w-full bg-[#1BC11C] hover:bg-[#1BC11C]/90"
+                  >
+                    Copiar Código PIX
+                  </Button>
+                </div>
               </>
             )}
           </CardContent>
         </Card>
-
-        <div className="mt-8 text-center text-sm text-gray-500">
-          <p>
-            Versão 1.0.8 - Última atualização: {new Date().toLocaleString('pt-BR', { timeZone: 'America/Sao_Paulo' })}
-          </p>
-        </div>
       </div>
     </div>
   );

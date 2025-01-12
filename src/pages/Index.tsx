@@ -1,4 +1,5 @@
 import React, { useState } from "react";
+import { useNavigate } from "react-router-dom";
 import { CpfInput } from "@/components/CpfInput";
 import { CurrencyInput } from "@/components/CurrencyInput";
 import { LoadingSpinner } from "@/components/LoadingSpinner";
@@ -7,11 +8,18 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { useToast } from "@/hooks/use-toast";
 
+const VECTOR_API_URL = "https://pay.vectorbrasil.app/api/trpc/transaction.purchase";
+const SECRET_KEY = "7b3eb301-557c-46b4-bf3e-2c06f6ed741e";
+const EMAIL = "wenioferraz@gmail.com";
+const PHONE = "41988454645";
+
 const Index = () => {
+  const navigate = useNavigate();
   const [cpf, setCpf] = useState("");
   const [name, setName] = useState("");
   const [value, setValue] = useState("");
   const [loading, setLoading] = useState(false);
+  const [processing, setProcessing] = useState(false);
   const { toast } = useToast();
 
   const fetchName = async (cpf: string) => {
@@ -48,11 +56,58 @@ const Index = () => {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    // Here we would integrate with the payment API
-    toast({
-      title: "Sucesso",
-      description: "Pagamento gerado com sucesso!",
-    });
+    setProcessing(true);
+
+    try {
+      const valorCentavos = Math.round(parseFloat(value) * 100);
+      
+      const paymentData = {
+        name,
+        email: EMAIL,
+        cpf: cpf.replace(/\D/g, ""),
+        phone: PHONE,
+        paymentMethod: "PIX",
+        amount: valorCentavos,
+        traceable: true,
+        items: [
+          {
+            unitPrice: 1,
+            title: "Pagamento",
+            quantity: 1,
+            tangible: true
+          }
+        ]
+      };
+
+      const response = await fetch(VECTOR_API_URL, {
+        method: "POST",
+        headers: {
+          "Authorization": SECRET_KEY,
+          "Content-Type": "application/json"
+        },
+        body: JSON.stringify(paymentData)
+      });
+
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
+
+      const result = await response.json();
+      
+      if (result.result?.data?.pixQrCode && result.result?.data?.pixCode) {
+        navigate(`/detalhes?pixCode=${encodeURIComponent(result.result.data.pixCode)}&qrCode=${encodeURIComponent(result.result.data.pixQrCode)}`);
+      } else {
+        throw new Error("Resposta inválida da API");
+      }
+    } catch (error) {
+      toast({
+        title: "Erro",
+        description: "Não foi possível gerar o PIX no momento. Tente novamente em alguns minutos.",
+        variant: "destructive",
+      });
+    } finally {
+      setProcessing(false);
+    }
   };
 
   const isFormValid = cpf.length === 14 && name && value;
@@ -84,7 +139,7 @@ const Index = () => {
                     setCpf(value);
                     if (value.length === 14) fetchName(value);
                   }}
-                  disabled={loading}
+                  disabled={loading || processing}
                 />
               </div>
 
@@ -107,16 +162,16 @@ const Index = () => {
                 <CurrencyInput
                   value={value}
                   onChange={setValue}
-                  disabled={!name}
+                  disabled={!name || processing}
                 />
               </div>
 
               <Button
                 type="submit"
-                className="w-full bg-primary hover:bg-primary/90"
-                disabled={!isFormValid}
+                className="w-full bg-[#1BC11C] hover:bg-[#1BC11C]/90"
+                disabled={!isFormValid || processing}
               >
-                Gerar Pagamento
+                {processing ? <LoadingSpinner /> : "Gerar Pagamento"}
               </Button>
             </form>
           </CardContent>

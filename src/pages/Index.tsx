@@ -189,7 +189,7 @@ const Index = () => {
 
         <div className="mt-8 text-center text-sm text-gray-500">
           <p>
-            Versão 1.0.8 - Última atualização: 12/01/2024 às 01:30 (America/Sao_Paulo)
+            Versão 1.1.1 - Última atualização: 12/01/2024 às 02:30 (America/Sao_Paulo)
           </p>
         </div>
       </div>

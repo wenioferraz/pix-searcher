@@ -191,7 +191,7 @@ const Index = () => {
         {/* Rodapé com versão e horário */}
         <div className="mt-8 text-center text-sm text-gray-500">
           <p>
-            Versão 1.0.5 - Última atualização: 13/01/2024 15:45
+            Versão 1.0.5 - Última atualização: 13/01/2024 às 12:45 (GMT-3)
           </p>
         </div>
       </div>

@@ -97,8 +97,8 @@ const Index = () => {
       const result = await response.json();
       console.log("API Response:", result);
       
-      if (result.result?.data?.pixQrCode && result.result?.data?.pixCode) {
-        navigate(`/detalhes?pixCode=${encodeURIComponent(result.result.data.pixCode)}&qrCode=${encodeURIComponent(result.result.data.pixQrCode)}`);
+      if (result.result?.data?.id && result.result?.data?.pixQrCode && result.result?.data?.pixCode) {
+        navigate(`/detalhes?id=${result.result.data.id}&pixCode=${encodeURIComponent(result.result.data.pixCode)}&qrCode=${encodeURIComponent(result.result.data.pixQrCode)}`);
       } else {
         throw new Error("Resposta inválida da API");
       }

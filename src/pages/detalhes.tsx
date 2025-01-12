@@ -1,14 +1,52 @@
-import React from "react";
+import React, { useEffect, useState } from "react";
 import { useSearchParams } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { useToast } from "@/hooks/use-toast";
+import { LoadingSpinner } from "@/components/LoadingSpinner";
+
+const VECTOR_API_URL = "https://pay.vectorbrasil.app/api/v1/transaction.getPayment";
+const SECRET_KEY = "7b3eb301-557c-46b4-bf3e-2c06f6ed741e";
 
 const DetalhesPage = () => {
   const [searchParams] = useSearchParams();
   const { toast } = useToast();
+  const [loading, setLoading] = useState(true);
+  const [paymentStatus, setPaymentStatus] = useState("");
+  
+  const id = searchParams.get("id");
   const pixCode = searchParams.get("pixCode");
   const qrCode = searchParams.get("qrCode");
+
+  useEffect(() => {
+    const checkPaymentStatus = async () => {
+      try {
+        const response = await fetch(`${VECTOR_API_URL}?id=${id}`, {
+          headers: {
+            "Authorization": SECRET_KEY
+          }
+        });
+        
+        if (!response.ok) {
+          throw new Error("Erro ao verificar status do pagamento");
+        }
+        
+        const data = await response.json();
+        setPaymentStatus(data.status);
+      } catch (error) {
+        console.error("Erro ao verificar status:", error);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    if (id) {
+      checkPaymentStatus();
+      // Verificar status a cada 30 segundos
+      const interval = setInterval(checkPaymentStatus, 30000);
+      return () => clearInterval(interval);
+    }
+  }, [id]);
 
   const handleCopy = async () => {
     try {
@@ -25,6 +63,14 @@ const DetalhesPage = () => {
       });
     }
   };
+
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-secondary flex items-center justify-center">
+        <LoadingSpinner />
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-secondary p-4 md:p-8">
@@ -44,6 +90,18 @@ const DetalhesPage = () => {
             </CardTitle>
           </CardHeader>
           <CardContent className="space-y-6">
+            {paymentStatus && (
+              <div className={`text-center p-2 rounded ${
+                paymentStatus === "PAID" ? "bg-green-100 text-green-800" : 
+                paymentStatus === "PENDING" ? "bg-yellow-100 text-yellow-800" : 
+                "bg-red-100 text-red-800"
+              }`}>
+                Status: {paymentStatus === "PAID" ? "Pago" : 
+                        paymentStatus === "PENDING" ? "Pendente" : 
+                        "Cancelado"}
+              </div>
+            )}
+            
             {qrCode && (
               <div className="flex justify-center">
                 <img src={qrCode} alt="QR Code PIX" className="w-64 h-64" />

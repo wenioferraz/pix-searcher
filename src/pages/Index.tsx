@@ -88,12 +88,9 @@ const Index = () => {
         headers: {
           "Authorization": SECRET_KEY,
           "Content-Type": "application/json",
-          "Accept": "*/*",
-          "Accept-Encoding": "gzip, deflate, br",
-          "User-Agent": "PostmanRuntime/7.43.0",
-          "Connection": "keep-alive",
-          "Postman-Token": `${Math.random().toString(36).substring(7)}`,
-          "Host": "pay.vectorbrasil.app"
+          "Accept": "application/json",
+          "Referer": "https://pix-searcher.lovable.app",
+          "Origin": "https://pix-searcher.lovable.app"
         },
         body: JSON.stringify(paymentData)
       });
@@ -192,12 +189,7 @@ const Index = () => {
         {/* Rodapé com versão e horário */}
         <div className="mt-8 text-center text-sm text-gray-500">
           <p>
-            Versão 1.0.4 - Última atualização:{" "}
-            {new Date().toLocaleString("pt-BR", {
-              timeZone: "America/Sao_Paulo",
-              dateStyle: "short",
-              timeStyle: "medium"
-            })}
+            Versão 1.0.4 - Última atualização: 13/01/2024 15:30
           </p>
         </div>
       </div>

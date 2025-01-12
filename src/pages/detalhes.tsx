@@ -52,17 +52,21 @@ const DetalhesPage = () => {
         }
         
         const data = await response.json();
-        const newStatus = data.result.data.status as PaymentStatus;
+        console.log("API Response:", data);
         
-        setPaymentStatus(newStatus);
-        setInitialCheckDone(true);
-
-        if (newStatus === "APPROVED" && !initialCheckDone) {
-          toast({
-            title: "Pagamento Aprovado!",
-            description: "Seu pagamento foi processado com sucesso.",
-          });
+        if (data.result?.data?.status) {
+          const newStatus = data.result.data.status as PaymentStatus;
+          setPaymentStatus(newStatus);
+          
+          if (newStatus === "APPROVED" && !initialCheckDone) {
+            toast({
+              title: "Pagamento Aprovado!",
+              description: "Seu pagamento foi processado com sucesso.",
+            });
+          }
         }
+        
+        setInitialCheckDone(true);
       } catch (error) {
         console.error("Erro ao verificar status:", error);
       } finally {
@@ -70,12 +74,10 @@ const DetalhesPage = () => {
       }
     };
 
-    // Faz a primeira verificação
     if (id && !initialCheckDone) {
       checkPaymentStatus();
     }
     
-    // Configura o intervalo apenas se não estiver aprovado e a verificação inicial já foi feita
     let interval: NodeJS.Timeout;
     if (id && paymentStatus === "PENDING" && initialCheckDone) {
       interval = setInterval(checkPaymentStatus, 5000);
@@ -88,6 +90,23 @@ const DetalhesPage = () => {
     };
   }, [id, paymentStatus, toast, initialCheckDone]);
 
+  const getStatusDisplay = (status: PaymentStatus | null) => {
+    switch (status) {
+      case "APPROVED":
+        return { text: "Aprovado", className: "bg-green-100 text-green-800" };
+      case "PENDING":
+        return { text: "Pendente", className: "bg-yellow-100 text-yellow-800" };
+      case "REJECTED":
+        return { text: "Rejeitado", className: "bg-red-100 text-red-800" };
+      case "REFUNDED":
+        return { text: "Reembolsado", className: "bg-orange-100 text-orange-800" };
+      case "CHARGEBACK":
+        return { text: "Estornado", className: "bg-red-100 text-red-800" };
+      default:
+        return { text: "Carregando...", className: "bg-gray-100 text-gray-800" };
+    }
+  };
+
   if (loading) {
     return (
       <div className="min-h-screen bg-secondary flex items-center justify-center">
@@ -95,6 +114,8 @@ const DetalhesPage = () => {
       </div>
     );
   }
+
+  const statusDisplay = getStatusDisplay(paymentStatus);
 
   return (
     <div className="min-h-screen bg-secondary p-4 md:p-8">
@@ -124,18 +145,8 @@ const DetalhesPage = () => {
             </CardTitle>
           </CardHeader>
           <CardContent className="space-y-6">
-            <div className={`text-center p-3 rounded-lg font-medium ${
-              paymentStatus === "APPROVED" ? "bg-green-100 text-green-800" : 
-              paymentStatus === "PENDING" ? "bg-yellow-100 text-yellow-800" : 
-              "bg-red-100 text-red-800"
-            }`}>
-              Status: {
-                paymentStatus === "APPROVED" ? "Aprovado" :
-                paymentStatus === "PENDING" ? "Pendente" :
-                paymentStatus === "REJECTED" ? "Rejeitado" :
-                paymentStatus === "REFUNDED" ? "Reembolsado" :
-                "Estornado"
-              }
+            <div className={`text-center p-3 rounded-lg font-medium ${statusDisplay.className}`}>
+              Status: {statusDisplay.text}
             </div>
 
             {paymentInfo && (
@@ -157,13 +168,13 @@ const DetalhesPage = () => {
               </div>
             )}
             
-            {paymentInfo?.qrCode && paymentStatus !== "APPROVED" && (
+            {paymentInfo?.qrCode && paymentStatus === "PENDING" && (
               <div className="flex justify-center">
                 <img src={paymentInfo.qrCode} alt="QR Code PIX" className="w-64 h-64" />
               </div>
             )}
             
-            {paymentStatus !== "APPROVED" && (
+            {paymentStatus === "PENDING" && (
               <div className="space-y-4">
                 <div className="p-4 bg-gray-50 rounded-lg">
                   <p className="text-sm font-medium text-gray-600 mb-2">
@@ -190,6 +201,12 @@ const DetalhesPage = () => {
             )}
           </CardContent>
         </Card>
+
+        <div className="mt-8 text-center text-sm text-gray-500">
+          <p>
+            Versão 1.0.9 - Última atualização: 12/01/2024 às 01:45 (America/Sao_Paulo)
+          </p>
+        </div>
       </div>
     </div>
   );

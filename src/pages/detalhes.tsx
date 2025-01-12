@@ -27,6 +27,7 @@ const DetalhesPage = () => {
   const [loading, setLoading] = useState(true);
   const [paymentStatus, setPaymentStatus] = useState<PaymentStatus>("PENDING");
   const [paymentInfo, setPaymentInfo] = useState<PaymentInfo | null>(null);
+  const [initialCheckDone, setInitialCheckDone] = useState(false);
   
   const id = searchParams.get("id");
 
@@ -53,14 +54,14 @@ const DetalhesPage = () => {
         const data = await response.json();
         const newStatus = data.result.data.status as PaymentStatus;
         
-        if (newStatus !== paymentStatus) {
-          setPaymentStatus(newStatus);
-          if (newStatus === "APPROVED") {
-            toast({
-              title: "Pagamento Aprovado!",
-              description: "Seu pagamento foi processado com sucesso.",
-            });
-          }
+        setPaymentStatus(newStatus);
+        setInitialCheckDone(true);
+
+        if (newStatus === "APPROVED" && !initialCheckDone) {
+          toast({
+            title: "Pagamento Aprovado!",
+            description: "Seu pagamento foi processado com sucesso.",
+          });
         }
       } catch (error) {
         console.error("Erro ao verificar status:", error);
@@ -69,15 +70,23 @@ const DetalhesPage = () => {
       }
     };
 
-    if (id) {
+    // Faz a primeira verificação
+    if (id && !initialCheckDone) {
       checkPaymentStatus();
-      // Só configura o intervalo se o status não for APPROVED
-      if (paymentStatus !== "APPROVED") {
-        const interval = setInterval(checkPaymentStatus, 5000);
-        return () => clearInterval(interval);
-      }
     }
-  }, [id, paymentStatus, toast]);
+    
+    // Configura o intervalo apenas se não estiver aprovado e a verificação inicial já foi feita
+    let interval: NodeJS.Timeout;
+    if (id && paymentStatus === "PENDING" && initialCheckDone) {
+      interval = setInterval(checkPaymentStatus, 5000);
+    }
+
+    return () => {
+      if (interval) {
+        clearInterval(interval);
+      }
+    };
+  }, [id, paymentStatus, toast, initialCheckDone]);
 
   if (loading) {
     return (

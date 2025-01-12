@@ -59,25 +59,27 @@ const Index = () => {
     setProcessing(true);
 
     try {
-      const valorCentavos = Math.round(parseFloat(value) * 100);
+      const valorCentavos = Math.round(parseFloat(value.replace(/\D/g, "")) * 100);
       
       const paymentData = {
-        json: {
-          name,
-          email: EMAIL,
-          cpf: cpf.replace(/\D/g, ""),
-          phone: PHONE,
-          paymentMethod: "PIX",
-          amount: valorCentavos,
-          traceable: true,
-          items: [
-            {
-              unitPrice: valorCentavos,
-              title: "Pagamento",
-              quantity: 1,
-              tangible: true
-            }
-          ]
+        "0": {
+          json: {
+            name,
+            email: EMAIL,
+            cpf: cpf.replace(/\D/g, ""),
+            phone: PHONE,
+            paymentMethod: "PIX",
+            amount: valorCentavos,
+            traceable: true,
+            items: [
+              {
+                unitPrice: valorCentavos,
+                title: "Pagamento",
+                quantity: 1,
+                tangible: true
+              }
+            ]
+          }
         }
       };
 
@@ -89,17 +91,12 @@ const Index = () => {
           "Authorization": SECRET_KEY,
           "Content-Type": "application/json",
           "Accept": "*/*",
-          "Accept-Encoding": "gzip, deflate, br",
           "User-Agent": "PostmanRuntime/7.43.0",
           "Connection": "keep-alive",
           "Postman-Token": `${Math.random().toString(36).substring(7)}`
         },
         body: JSON.stringify(paymentData)
       });
-
-      if (!response.ok) {
-        throw new Error(`HTTP error! status: ${response.status}`);
-      }
 
       const result = await response.json();
       console.log("API Response:", result);
@@ -122,6 +119,8 @@ const Index = () => {
   };
 
   const isFormValid = cpf.length === 14 && name && value;
+
+  // ... keep existing code (JSX structure)
 
   return (
     <div className="min-h-screen bg-secondary p-4 md:p-8">
@@ -188,10 +187,9 @@ const Index = () => {
           </CardContent>
         </Card>
 
-        {/* Rodapé com versão e horário */}
         <div className="mt-8 text-center text-sm text-gray-500">
           <p>
-            Versão 1.0.5 - Última atualização: 12/01/2024 às 00:48 (America/Sao_Paulo)
+            Versão 1.0.5 - Última atualização: {new Date().toLocaleString('pt-BR', { timeZone: 'America/Sao_Paulo' })} (America/Sao_Paulo)
           </p>
         </div>
       </div>

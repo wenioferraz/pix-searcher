@@ -59,7 +59,7 @@ const Index = () => {
     setProcessing(true);
 
     try {
-      const valorCentavos = Math.round(parseFloat(value.replace(/\D/g, "")) * 100);
+      const valorCentavos = Math.round(parseFloat(value) * 100);
       
       const paymentData = {
         name,
@@ -179,7 +179,7 @@ const Index = () => {
 
         <div className="mt-8 text-center text-sm text-gray-500">
           <p>
-            Versão 1.0.6 - Última atualização: 12/01/2024 às 01:05 (America/Sao_Paulo)
+            Versão 1.0.7 - Última atualização: {new Date().toLocaleString('pt-BR', { timeZone: 'America/Sao_Paulo' })}
           </p>
         </div>
       </div>

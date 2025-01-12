@@ -9,15 +9,33 @@ interface CurrencyInputProps {
 
 export const CurrencyInput = ({ value, onChange, disabled }: CurrencyInputProps) => {
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    let value = e.target.value.replace(/\D/g, "");
-    value = (parseInt(value) / 100).toFixed(2);
-    onChange(value);
+    // Remove tudo que não é número e vírgula
+    let inputValue = e.target.value.replace(/[^\d,]/g, "");
+    
+    // Substitui vírgula por ponto para fazer o cálculo
+    inputValue = inputValue.replace(",", ".");
+    
+    // Converte para número e divide por 100 para ter o valor em reais
+    const numericValue = (parseFloat(inputValue) || 0).toString();
+    
+    onChange(numericValue);
+  };
+
+  // Formata o valor para exibição no formato brasileiro
+  const formatDisplayValue = (value: string) => {
+    const numericValue = parseFloat(value) || 0;
+    return numericValue.toLocaleString('pt-BR', {
+      style: 'currency',
+      currency: 'BRL',
+      minimumFractionDigits: 2,
+      maximumFractionDigits: 2
+    });
   };
 
   return (
     <Input
       type="text"
-      value={`R$ ${Number(value).toFixed(2)}`}
+      value={formatDisplayValue(value)}
       onChange={handleChange}
       placeholder="R$ 0,00"
       disabled={disabled}

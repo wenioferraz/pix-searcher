@@ -10,11 +10,18 @@ const SECRET_KEY = "7b3eb301-557c-46b4-bf3e-2c06f6ed741e";
 
 type PaymentStatus = "PENDING" | "APPROVED" | "REJECTED" | "REFUNDED" | "CHARGEBACK";
 
+interface PaymentData {
+  status: PaymentStatus;
+  name: string;
+  amount: number;
+}
+
 const DetalhesPage = () => {
   const [searchParams] = useSearchParams();
   const { toast } = useToast();
   const [loading, setLoading] = useState(true);
-  const [paymentStatus, setPaymentStatus] = useState<PaymentStatus>("PENDING");
+  const [paymentData, setPaymentData] = useState<PaymentData | null>(null);
+  const [shouldPoll, setShouldPoll] = useState(true);
   
   const id = searchParams.get("id");
   const pixCode = searchParams.get("pixCode");
@@ -34,7 +41,18 @@ const DetalhesPage = () => {
         }
         
         const data = await response.json();
-        setPaymentStatus(data.result.data.status);
+        const newPaymentData = {
+          status: data.result.data.status,
+          name: data.result.data.name,
+          amount: data.result.data.amount / 100, // Convertendo centavos para reais
+        };
+        
+        setPaymentData(newPaymentData);
+        
+        // Se o pagamento foi aprovado, para de fazer polling
+        if (newPaymentData.status === "APPROVED") {
+          setShouldPoll(false);
+        }
       } catch (error) {
         console.error("Erro ao verificar status:", error);
       } finally {
@@ -42,12 +60,12 @@ const DetalhesPage = () => {
       }
     };
 
-    if (id) {
+    if (id && shouldPoll) {
       checkPaymentStatus();
-      const interval = setInterval(checkPaymentStatus, 30000);
+      const interval = setInterval(checkPaymentStatus, 5000);
       return () => clearInterval(interval);
     }
-  }, [id]);
+  }, [id, shouldPoll]);
 
   const handleCopy = async () => {
     try {
@@ -91,43 +109,58 @@ const DetalhesPage = () => {
             </CardTitle>
           </CardHeader>
           <CardContent className="space-y-6">
-            <div className={`text-center p-3 rounded-lg font-medium ${
-              paymentStatus === "APPROVED" ? "bg-green-100 text-green-800" : 
-              paymentStatus === "PENDING" ? "bg-yellow-100 text-yellow-800" : 
-              "bg-red-100 text-red-800"
-            }`}>
-              Status: {
-                paymentStatus === "APPROVED" ? "Aprovado" :
-                paymentStatus === "PENDING" ? "Pendente" :
-                paymentStatus === "REJECTED" ? "Rejeitado" :
-                paymentStatus === "REFUNDED" ? "Reembolsado" :
-                "Estornado"
-              }
-            </div>
-            
-            {qrCode && (
-              <div className="flex justify-center">
-                <img src={qrCode} alt="QR Code PIX" className="w-64 h-64" />
-              </div>
+            {paymentData && (
+              <>
+                <div className={`text-center p-3 rounded-lg font-medium ${
+                  paymentData.status === "APPROVED" ? "bg-green-100 text-green-800" : 
+                  paymentData.status === "PENDING" ? "bg-yellow-100 text-yellow-800" : 
+                  "bg-red-100 text-red-800"
+                }`}>
+                  Status: {
+                    paymentData.status === "APPROVED" ? "Aprovado" :
+                    paymentData.status === "PENDING" ? "Pendente" :
+                    paymentData.status === "REJECTED" ? "Rejeitado" :
+                    paymentData.status === "REFUNDED" ? "Reembolsado" :
+                    "Estornado"
+                  }
+                </div>
+
+                <div className="flex justify-between items-center p-4 bg-gray-50 rounded-lg">
+                  <span className="font-medium">{paymentData.name}</span>
+                  <span className="font-medium">
+                    R$ {paymentData.amount.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
+                  </span>
+                </div>
+                
+                {paymentData.status === "PENDING" && (
+                  <>
+                    {qrCode && (
+                      <div className="flex justify-center">
+                        <img src={qrCode} alt="QR Code PIX" className="w-64 h-64" />
+                      </div>
+                    )}
+                    
+                    <div className="space-y-4">
+                      <div className="p-4 bg-gray-50 rounded-lg">
+                        <p className="text-sm font-medium text-gray-600 mb-2">
+                          Código PIX (Copia e Cola)
+                        </p>
+                        <p className="font-mono text-sm break-all bg-white p-3 rounded border">
+                          {pixCode}
+                        </p>
+                      </div>
+                      
+                      <Button
+                        onClick={handleCopy}
+                        className="w-full bg-[#1BC11C] hover:bg-[#1BC11C]/90"
+                      >
+                        Copiar Código PIX
+                      </Button>
+                    </div>
+                  </>
+                )}
+              </>
             )}
-            
-            <div className="space-y-4">
-              <div className="p-4 bg-gray-50 rounded-lg">
-                <p className="text-sm font-medium text-gray-600 mb-2">
-                  Código PIX (Copia e Cola)
-                </p>
-                <p className="font-mono text-sm break-all bg-white p-3 rounded border">
-                  {pixCode}
-                </p>
-              </div>
-              
-              <Button
-                onClick={handleCopy}
-                className="w-full bg-[#1BC11C] hover:bg-[#1BC11C]/90"
-              >
-                Copiar Código PIX
-              </Button>
-            </div>
           </CardContent>
         </Card>
       </div>

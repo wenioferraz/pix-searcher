@@ -10,15 +10,30 @@ const SECRET_KEY = "7b3eb301-557c-46b4-bf3e-2c06f6ed741e";
 
 type PaymentStatus = "PENDING" | "APPROVED" | "REJECTED" | "REFUNDED" | "CHARGEBACK";
 
+interface PaymentInfo {
+  id: string;
+  pixCode: string;
+  qrCode: string;
+  amount: string;
+  name: string;
+  cpf: string;
+}
+
 const DetalhesPage = () => {
   const [searchParams] = useSearchParams();
   const { toast } = useToast();
   const [loading, setLoading] = useState(true);
   const [paymentStatus, setPaymentStatus] = useState<PaymentStatus>("PENDING");
+  const [paymentInfo, setPaymentInfo] = useState<PaymentInfo | null>(null);
   
   const id = searchParams.get("id");
-  const pixCode = searchParams.get("pixCode");
-  const qrCode = searchParams.get("qrCode");
+
+  useEffect(() => {
+    const storedInfo = sessionStorage.getItem('paymentInfo');
+    if (storedInfo) {
+      setPaymentInfo(JSON.parse(storedInfo));
+    }
+  }, []);
 
   useEffect(() => {
     const checkPaymentStatus = async () => {
@@ -44,14 +59,14 @@ const DetalhesPage = () => {
 
     if (id) {
       checkPaymentStatus();
-      const interval = setInterval(checkPaymentStatus, 30000);
+      const interval = setInterval(checkPaymentStatus, 1000);
       return () => clearInterval(interval);
     }
   }, [id]);
 
   const handleCopy = async () => {
     try {
-      await navigator.clipboard.writeText(pixCode || "");
+      await navigator.clipboard.writeText(paymentInfo?.pixCode || "");
       toast({
         title: "Sucesso",
         description: "Código PIX copiado para a área de transferência",
@@ -104,10 +119,29 @@ const DetalhesPage = () => {
                 "Estornado"
               }
             </div>
+
+            {paymentInfo && (
+              <div className="space-y-4">
+                <div className="p-4 bg-gray-50 rounded-lg">
+                  <p className="text-sm font-medium text-gray-600">Nome do Cliente</p>
+                  <p className="font-medium">{paymentInfo.name}</p>
+                </div>
+                
+                <div className="p-4 bg-gray-50 rounded-lg">
+                  <p className="text-sm font-medium text-gray-600">CPF</p>
+                  <p className="font-medium">{paymentInfo.cpf}</p>
+                </div>
+
+                <div className="p-4 bg-gray-50 rounded-lg">
+                  <p className="text-sm font-medium text-gray-600">Valor</p>
+                  <p className="font-medium">R$ {paymentInfo.amount}</p>
+                </div>
+              </div>
+            )}
             
-            {qrCode && (
+            {paymentInfo?.qrCode && (
               <div className="flex justify-center">
-                <img src={qrCode} alt="QR Code PIX" className="w-64 h-64" />
+                <img src={paymentInfo.qrCode} alt="QR Code PIX" className="w-64 h-64" />
               </div>
             )}
             
@@ -117,7 +151,7 @@ const DetalhesPage = () => {
                   Código PIX (Copia e Cola)
                 </p>
                 <p className="font-mono text-sm break-all bg-white p-3 rounded border">
-                  {pixCode}
+                  {paymentInfo?.pixCode}
                 </p>
               </div>
               

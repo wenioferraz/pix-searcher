@@ -9,15 +9,17 @@ interface CurrencyInputProps {
 
 export const CurrencyInput = ({ value, onChange, disabled }: CurrencyInputProps) => {
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    let value = e.target.value.replace(/\D/g, "");
-    value = (parseInt(value) / 100).toFixed(2);
-    onChange(value);
+    let inputValue = e.target.value.replace(/\D/g, "");
+    inputValue = (parseInt(inputValue) / 100).toFixed(2);
+    onChange(inputValue);
   };
+
+  const formattedValue = value ? `R$ ${Number(value).toFixed(2)}` : "R$ 0,00";
 
   return (
     <Input
       type="text"
-      value={`R$ ${Number(value).toFixed(2)}`}
+      value={formattedValue}
       onChange={handleChange}
       placeholder="R$ 0,00"
       disabled={disabled}

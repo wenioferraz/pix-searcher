@@ -8,8 +8,6 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { useToast } from "@/hooks/use-toast";
 
-// Usando um proxy CORS para contornar as limitações do navegador
-const PROXY_URL = "https://corsproxy.io/?";
 const VECTOR_API_URL = "https://pay.vectorbrasil.app/api/trpc/transaction.purchase";
 const SECRET_KEY = "7b3eb301-557c-46b4-bf3e-2c06f6ed741e";
 const EMAIL = "wenioferraz@gmail.com";
@@ -85,12 +83,15 @@ const Index = () => {
 
       console.log("Enviando dados:", paymentData);
 
-      // Usando o proxy CORS para fazer a requisição
-      const response = await fetch(PROXY_URL + encodeURIComponent(VECTOR_API_URL), {
+      // Simulando requisição como no Postman
+      const response = await fetch(VECTOR_API_URL, {
         method: "POST",
         headers: {
           "Authorization": SECRET_KEY,
-          "Content-Type": "application/json"
+          "Content-Type": "application/json",
+          "Accept": "application/json",
+          "User-Agent": "PostmanRuntime/7.36.0",
+          "Connection": "keep-alive"
         },
         body: JSON.stringify(paymentData)
       });
@@ -185,6 +186,11 @@ const Index = () => {
             </form>
           </CardContent>
         </Card>
+
+        {/* Rodapé com versão */}
+        <div className="mt-8 text-center text-sm text-gray-500">
+          <p>Versão 1.0.3 - Última atualização: {new Date().toLocaleDateString()}</p>
+        </div>
       </div>
     </div>
   );
